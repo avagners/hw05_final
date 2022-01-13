@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% load thumbnail %}
+{% block title %}
+    Пост {{ post|truncatechars:30 }}
+{% endblock %}
+{% block content %}    
+<div class="container py-5">
+    <div class="row">
+        <aside class="col-12 col-md-3">
+            <ul class="list-group list-group-flush">
+                <li class="list-group-item">
+                    Дата публикации: {{ post.pub_date|date:"d E Y" }}
+                </li>  
+                <li class="list-group-item">
+                    Группа: {{ post.group.title }}
+                    <br>
+                    {% if post.group %}
+                        <a href="{% url 'posts:group_list' post.group.slug %}">
+                            Все записи группы
+                        </a>
+                    {% endif %}
+                </li>
+                <li class="list-group-item">
+                    Автор: {{ post.author.get_full_name }}
+                </li>
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    Всего постов автора: <span >{{ post.author.posts.count }}</span>
+                </li>
+                <li class="list-group-item">
+                    {% if post.author.username is not None %}
+                        <a href=" {% url 'posts:profile' post.author.username %} ">
+                            Все посты пользователя
+                        </a>
+                    {% endif %}
+                </li>
+            </ul>
+        </aside>
+        <article class="col-12 col-md-9">
+            {% thumbnail post.image "960x339" crop="center" upscale=True as im %}
+            <img class="card-img my-2" src="{{ im.url }}">
+            {% endthumbnail %}
+            <p>{{ post.text }}</p>
+            {% if post.author == request.user %}
+            <div class="d-flex">
+                <a class="btn btn-primary" href="{% url 'posts:post_edit' post_id=post.id %}">
+                    Редактировать запись      
+                </a> 
+            </div>
+            {% endif %}
+            {% include 'includes/comments.html' %}
+        </article>
+    </div> 
+</div> 
+{% endblock %}
+{% include 'includes/footer.html' %}
