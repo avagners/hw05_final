@@ -159,6 +159,7 @@ class CacheTests(TestCase):
         # проверяем отсутствие поста на странице
         self.assertNotContains(response, self.post.text)
 
+
 class TestHandlers(TestCase):
     def test_404_page(self):
         '''Cервер возвращает код 404'''
