@@ -144,16 +144,17 @@ class CacheTests(TestCase):
     def test_cache_index_page(self):
         '''Тест для проверки кеширования posts:index'''
         # запрашиваем главную страницу
-        response = self.guest_client.get(reverse('posts:index'))
+        response = self.guest_client.get('/')
         # удаляем пост из базы
-        Post.objects.get(text=self.post.text,
-                         author=self.post.author).delete()
+        self.post.delete()
+        # запрашиваем главную страницу. Получаем ее из кеша до удаления поста
+        response = self.guest_client.get('/')
         # проверяем наличие поста на странице
         self.assertIn(self.post.text, response.content.decode('utf-8'))
         # очищаем кеш
         cache.clear()
         # делаем новый запрос главной странцы
-        response = self.guest_client.get(reverse('posts:index'))
+        response = self.guest_client.get('/')
         # проверяем отсутствие поста на странице
         self.assertNotIn(self.post.text, response.content.decode('utf-8'))
 
