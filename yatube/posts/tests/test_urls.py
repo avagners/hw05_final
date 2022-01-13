@@ -140,24 +140,24 @@ class CacheTests(TestCase):
     def setUp(self):
         # Создаем неавторизованный клиент
         self.guest_client = Client()
+        cache.clear()
 
     def test_cache_index_page(self):
         '''Тест для проверки кеширования posts:index'''
         # запрашиваем главную страницу
-        response = self.guest_client.get('/')
+        response = self.guest_client.get(reverse('posts:index'))
         # удаляем пост из базы
         self.post.delete()
         # запрашиваем главную страницу. Получаем ее из кеша до удаления поста
-        response = self.guest_client.get('/')
+        response = self.guest_client.get(reverse('posts:index'))
         # проверяем наличие поста на странице
-        self.assertIn(self.post.text, response.content.decode('utf-8'))
+        self.assertContains(response, self.post.text)
         # очищаем кеш
         cache.clear()
         # делаем новый запрос главной странцы
-        response = self.guest_client.get('/')
+        response = self.guest_client.get(reverse('posts:index'))
         # проверяем отсутствие поста на странице
-        self.assertNotIn(self.post.text, response.content.decode('utf-8'))
-
+        self.assertNotContains(response, self.post.text)
 
 class TestHandlers(TestCase):
     def test_404_page(self):
