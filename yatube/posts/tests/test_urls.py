@@ -148,13 +148,13 @@ class CacheTests(TestCase):
         # удаляем пост из базы
         self.post.delete()
         # запрашиваем главную страницу. Получаем ее из кеша до удаления поста
-        response = self.guest_client.get('/')
+        response = self.guest_client.get(reverse('posts:index'))
         # проверяем наличие поста на странице
         self.assertIn(self.post.text, response.content.decode('utf-8'))
         # очищаем кеш
         cache.clear()
         # делаем новый запрос главной странцы
-        response = self.guest_client.get('/')
+        response = self.guest_client.get(reverse('posts:index'))
         # проверяем отсутствие поста на странице
         self.assertNotIn(self.post.text, response.content.decode('utf-8'))
 
