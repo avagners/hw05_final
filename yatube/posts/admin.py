@@ -16,6 +16,7 @@ class GroupAdmin(admin.ModelAdmin):
     search_fields = ('title',)
     empty_value_display = '-пусто-'
 
+
 class FollowAdmin(admin.ModelAdmin):
     list_display = ("pk", "user", "author")
     empty_value_display = "-пусто-"
