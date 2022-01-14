@@ -4,6 +4,7 @@ import tempfile
 from django.conf import settings
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.contrib.auth import get_user_model
+from django.core.cache import cache
 from django.core.paginator import Page
 from django.test import Client, TestCase
 from http import HTTPStatus
@@ -328,7 +329,6 @@ class FollowingTests(TestCase):
         # Создаем пользователей и тестовый пост
         cls.user1 = User.objects.create_user(username='Petr')
         cls.user2 = User.objects.create_user(username='Viktoria')
-        cls.user3 = User.objects.create_user(username='Semen')
         cls.group = Group.objects.create(
             title='Тестовое название группы',
             slug='test-slug',
@@ -344,29 +344,42 @@ class FollowingTests(TestCase):
         # Создаем авторизованный клиент user2
         self.authorized_client = Client()
         self.authorized_client.force_login(self.user2)
+        cache.clear()
 
-    def test_follow(self):
-        '''Авторизованный пользователь может подписываться'''
+    def test_follow_and_unfollow(self):
+        '''Авторизованный пользователь может подписываться
+        отписываться от авторов'''
+        # Считаем кол-во подписок в базе до создания новой подписки
+        count_follow_obj = Follow.objects.count()
         # Подписываемся на user1 (автор единственного поста)
-        self.authorized_client.get(
-            reverse('posts:profile_follow', kwargs={'username': self.user1}))
-        # Проверяем кол-во подписок в базе
-        self.assertEqual(Follow.objects.count(), 1)
-
-    def test_unfollow(self):
-        '''Авторизованный пользователь может удалять подписки'''
+        response = self.authorized_client.get(reverse(
+            'posts:profile_follow', kwargs={'username': self.user1}
+        ))
+        # Проверяем статус ответа страницы. Должен быть 302
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
+        # Проверяем создание записи в БД соответсующей ожиданиям
+        follow_obj = Follow.objects.get(author=self.user1, user=self.user2)
+        self.assertIsNotNone(follow_obj)
+        # Проверяем кол-во подписок в базе после новой подписки
+        self.assertEqual(Follow.objects.count(), count_follow_obj + 1)
+        # Считаем кол-во подписок в базе после подписки
+        count_follow_obj_after_follow = Follow.objects.count()
         # Отписываемся от user1 (автор единственного поста)
-        self.authorized_client.get(
-            reverse('posts:profile_unfollow', kwargs={'username': self.user1}))
-        # Проверяем кол-во подписок в базе
-        self.assertEqual(Follow.objects.count(), 0)
+        response = self.authorized_client.get(reverse(
+            'posts:profile_unfollow', kwargs={'username': self.user1}
+        ))
+        # Проверяем статус ответа страницы. Должен быть 302
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
+        # Проверяем кол-во подписок в базе после отписки
+        self.assertEqual(
+            Follow.objects.count(), count_follow_obj_after_follow - 1
+        )
 
     def test_new_post_for_followers(self):
         '''Новая запись пользователя появляется в ленте
         тех, кто на него подписан'''
         # Подписываемся на user1 (автор единственного поста)
-        self.authorized_client.get(
-            reverse('posts:profile_follow', kwargs={'username': self.user1}))
+        Follow.objects.create(author=self.user1, user=self.user2)
         # Запрашиваем страницу follow_index
         response = self.authorized_client.get(reverse('posts:follow_index'))
         # Проверяем доступ страницы для авторизованного пользователя
@@ -378,8 +391,9 @@ class FollowingTests(TestCase):
         '''Новая запись пользователя не появляется в ленте
         тех, кто не подписан'''
         # Создаем новый пост от пользователя, которого нет подписки
+        user3 = User.objects.create_user(username='Semen')
         new_post = Post.objects.create(
-            author=self.user3,
+            author=user3,
             text='''Пост пользователя, на который
             не подписан авторизованный пользователь.'''
         )

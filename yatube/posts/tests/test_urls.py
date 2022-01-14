@@ -69,7 +69,7 @@ class PostURLTests(TestCase):
             f'/profile/{PostURLTests.post.author}/',
             f'/posts/{PostURLTests.post.id}/',
             '/create/',
-            f'/posts/{PostURLTests.post.id}/edit/'
+            f'/posts/{PostURLTests.post.id}/edit/',
         ]
         for url in urls_list:
             with self.subTest(url=url):
@@ -84,7 +84,11 @@ class PostURLTests(TestCase):
             + reverse('posts:post_create'),
             f'/posts/{PostURLTests.post.id}/edit/':
             reverse('users:login') + '?next='
-            + reverse('posts:post_edit', args=[PostURLTests.post.id])
+            + reverse('posts:post_edit', args=[PostURLTests.post.id]),
+            f'/posts/{PostURLTests.post.id}/comment': reverse('users:login')
+            + '?next=' + reverse(
+                'posts:add_comment', args=[PostURLTests.post.id]
+            )
         }
         for url, redirect in dict_url_redirect.items():
             with self.subTest(url=url):
@@ -102,6 +106,37 @@ class PostURLTests(TestCase):
             'posts:post_detail', args=[PostURLTests.post.id]
         ))
 
+    def test_redirect_add_comment_page_for_authorized_client(self):
+        """Адрес 'posts/<int:post_id>/comment' перенаправит авторизованного
+        пользователя на страницу просмотра поста."""
+        response = self.authorized_client.get(
+            reverse('posts:add_comment', args=[PostURLTests.post.id]),
+            follow=True
+        )
+        self.assertRedirects(response, reverse(
+            'posts:post_detail', args=[PostURLTests.post.id]
+        ))
+
+    def test_redirect_profile_follow_unfollow_for_authorized_client(self):
+        """После подписки или отписки на автора сайт перенаправит авторизованного
+        пользователя на страницу posts:profile."""
+        # Проверка редиректа при подписке
+        response = self.authorized_client.get(
+            reverse('posts:profile_follow', args=[PostURLTests.user]),
+            follow=True
+        )
+        self.assertRedirects(response, reverse(
+            'posts:profile', args=[PostURLTests.user]
+        ))
+        # Проверка редиректа при отписке
+        response = self.authorized_client.get(
+            reverse('posts:profile_unfollow', args=[PostURLTests.user]),
+            follow=True
+        )
+        self.assertRedirects(response, reverse(
+            'posts:profile', args=[PostURLTests.user]
+        ))
+
     def test_urls_uses_correct_template(self):
         """URL-адрес использует соответствующий шаблон."""
         # Шаблоны по адресам
@@ -112,6 +147,7 @@ class PostURLTests(TestCase):
             f'/posts/{PostURLTests.post.id}/': 'posts/post_detail.html',
             '/create/': 'posts/create_post.html',
             f'/posts/{PostURLTests.post.id}/edit/': 'posts/create_post.html',
+            '/follow/': 'posts/follow.html',
         }
         for template, adress in templates_url_names.items():
             with self.subTest(adress=adress):
