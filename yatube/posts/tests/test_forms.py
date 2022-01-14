@@ -220,7 +220,7 @@ class PostCommentFormTests(TestCase):
         self.assertRedirects(
             response, reverse('users:login') + '?next='
             + reverse('posts:post_detail', args=[self.post.id])
-            + 'comment'
+            + 'comment/'
         )
         # Проверяем, проверяем HTTPStatus
         self.assertEqual(response.status_code, HTTPStatus.OK)

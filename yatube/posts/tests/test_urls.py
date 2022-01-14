@@ -85,7 +85,7 @@ class PostURLTests(TestCase):
             f'/posts/{PostURLTests.post.id}/edit/':
             reverse('users:login') + '?next='
             + reverse('posts:post_edit', args=[PostURLTests.post.id]),
-            f'/posts/{PostURLTests.post.id}/comment': reverse('users:login')
+            f'/posts/{PostURLTests.post.id}/comment/': reverse('users:login')
             + '?next=' + reverse(
                 'posts:add_comment', args=[PostURLTests.post.id]
             )

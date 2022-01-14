@@ -346,9 +346,8 @@ class FollowingTests(TestCase):
         self.authorized_client.force_login(self.user2)
         cache.clear()
 
-    def test_follow_and_unfollow(self):
-        '''Авторизованный пользователь может подписываться
-        отписываться от авторов'''
+    def test_follow(self):
+        '''Авторизованный пользователь может подписываться на авторов'''
         # Считаем кол-во подписок в базе до создания новой подписки
         count_follow_obj = Follow.objects.count()
         # Подписываемся на user1 (автор единственного поста)
@@ -362,22 +361,30 @@ class FollowingTests(TestCase):
         self.assertIsNotNone(follow_obj)
         # Проверяем кол-во подписок в базе после новой подписки
         self.assertEqual(Follow.objects.count(), count_follow_obj + 1)
+
+    def test_unfollow(self):
+        '''Авторизованный пользователь может отписываться от авторов'''
+        # Подписываемся на user1
+        Follow.objects.create(author=self.user1, user=self.user2)
         # Считаем кол-во подписок в базе после подписки
-        count_follow_obj_after_follow = Follow.objects.count()
-        # Отписываемся от user1 (автор единственного поста)
+        count_follow_obj = Follow.objects.count()
+        # Отписываемся от user1
         response = self.authorized_client.get(reverse(
             'posts:profile_unfollow', kwargs={'username': self.user1}
         ))
         # Проверяем статус ответа страницы. Должен быть 302
         self.assertEqual(response.status_code, HTTPStatus.FOUND)
         # Проверяем кол-во подписок в базе после отписки
-        self.assertEqual(
-            Follow.objects.count(), count_follow_obj_after_follow - 1
-        )
+        self.assertEqual(Follow.objects.count(), count_follow_obj - 1)
 
     def test_new_post_for_followers(self):
         '''Новая запись пользователя появляется в ленте
         тех, кто на него подписан'''
+        post = Post.objects.create(
+            author=self.user1,
+            text='''Пост пользователя, который должен
+            отобразиться в ленте.'''
+        )
         # Подписываемся на user1 (автор единственного поста)
         Follow.objects.create(author=self.user1, user=self.user2)
         # Запрашиваем страницу follow_index
@@ -385,7 +392,7 @@ class FollowingTests(TestCase):
         # Проверяем доступ страницы для авторизованного пользователя
         self.assertEqual(response.status_code, HTTPStatus.OK)
         # Проверяем наличие поста в ленте
-        self.assertContains(response, self.post)
+        self.assertContains(response, post)
 
     def test_new_post_for_not_followers(self):
         '''Новая запись пользователя не появляется в ленте
