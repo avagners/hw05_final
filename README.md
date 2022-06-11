@@ -1,3 +1,35 @@
-# hw05_final
+# Социальная сеть YaTube
+***Доступный функционал:***
+- Подписки на пользователей.
+- Просмотр, создание, изменение и удаление записей.
+- Просмотр и создание групп.
+- Возможность добавления, редактирования, удаления своих комментариев и просмотр чужих.
+- Подключены пагинация, кеширование, авторизация пользователя. Неавторизованному пользователю доступно только чтение.
+- Код покрытыт тестами.
 
-[![CI](https://github.com/yandex-praktikum/hw05_final/actions/workflows/python-app.yml/badge.svg?branch=master)](https://github.com/yandex-praktikum/hw05_final/actions/workflows/python-app.yml)
+## Запуск проекта:
+Клонируем репозиторий и переходим в него через терминал:
+
+``$ git clone https://github.com/avagners/hw05_final.git``
+
+``$ cd hw05_final``
+
+Создаем и активируем виртуальное окружение:
+
+``$ python3 -m venv venv``
+
+``$ source venv/bin/activate``
+
+Устанавливаем зависимости из файла requirements.txt:
+
+``$ python3 -m pip install --upgrade pip``
+
+``$ pip install -r requirements.txt``
+
+Выполняем миграции:
+
+``$ python3 manage.py migrate``
+
+Запускаем сервер:
+
+``$ python3 manage.py runserver``
